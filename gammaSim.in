@@ -1,0 +1,13 @@
+#macro file 
+/detector/TargetRadius     5 cm
+/detector/TargetLength     40 cm
+/testhadr/PrintModulo       1000000
+/run/setCut          0.01 mm
+/testhadr/Physics          QGSP_BIC_HP_EMZ
+/phsp/isAbsorber false
+/phsp/detAng 0 deg
+/phsp/NbFiles 25
+/phsp/NbAvailableFiles 2000
+/phsp/outputfilename QGSP_BIC_HP_EMZ_240MeV_PMMA_40x5cm_25_1e6p_choosename
+/phsp/isGamma true
+/phsp/filename /home/andreagutierre/simulations/protonSim-final-root/batch01/data/240MeV_QGSP_BIC_HP_EMZ_PMMA_40x2cm_1e6p_
