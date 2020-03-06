@@ -1,0 +1,104 @@
+//
+// ********************************************************************
+// * License and Disclaimer                                           *
+// *                                                                  *
+// * The  Geant4 software  is  copyright of the Copyright Holders  of *
+// * the Geant4 Collaboration.  It is provided  under  the terms  and *
+// * conditions of the Geant4 Software License,  included in the file *
+// * LICENSE and available at  http://cern.ch/geant4/license .  These *
+// * include a list of copyright holders.                             *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.  Please see the license in the file  LICENSE  and URL above *
+// * for the full disclaimer and the limitation of liability.         *
+// *                                                                  *
+// * This  code  implementation is the result of  the  scientific and *
+// * technical work of the GEANT4 collaboration.                      *
+// * By using,  copying,  modifying or  distributing the software (or *
+// * any work based  on the software)  you  agree  to acknowledge its *
+// * use  in  resulting  scientific  publications,  and indicate your *
+// * acceptance of all terms of the Geant4 Software license.          *
+// ********************************************************************
+//
+/// \file hadronic/Hadr01/src/PrimaryGeneratorAction.cc
+/// \brief Implementation of the PrimaryGeneratorAction class
+//
+// $Id: PrimaryGeneratorAction.cc 70761 2013-06-05 12:30:51Z gcosmo $
+//
+/////////////////////////////////////////////////////////////////////////
+//
+// PrimaryGeneratorAction
+//
+// Created: 31.01.03 V.Ivanchenko
+//
+// Modified:
+// 04.06.2006 Adoptation of Hadr01 (V.Ivanchenko)
+// 16.11.2006 Add option allowing to have user defined beam position (VI)
+//
+////////////////////////////////////////////////////////////////////////
+//
+#include <TTree.h>
+#include "PrimaryGeneratorAction.hh"
+#include "G4ParticleGun.hh"
+#include "G4SystemOfUnits.hh"
+#include "HistoManager.hh"
+#include "phspParticle.hh"
+#include "G4Event.hh"
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+PrimaryGeneratorAction::PrimaryGeneratorAction()
+ : G4VUserPrimaryGeneratorAction(),
+   fParticleGun(0), fHisto(0),fphsp(0)
+{
+  fParticleGun  = new G4ParticleGun(1);
+  fHisto = HistoManager::GetPointer();
+  fphsp = phspParticle::GetphspPointer();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+PrimaryGeneratorAction::~PrimaryGeneratorAction()
+{
+  delete fParticleGun;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
+{
+  G4ThreeVector pos,momDir;
+  G4int eventID;
+  G4int maxphspPart;
+  G4float e,x,y,z,px,py,pz,p;
+  
+  maxphspPart = fphsp->GetNbParticle(); 
+  eventID     = anEvent->GetEventID();
+
+  TTree* particleTree = fphsp->GetParticleTree();
+  particleTree->SetBranchAddress("e",&e);
+  particleTree->SetBranchAddress("x",&x);
+  particleTree->SetBranchAddress("y",&y);
+  particleTree->SetBranchAddress("z",&z);
+  particleTree->SetBranchAddress("px",&px);
+  particleTree->SetBranchAddress("py",&py);
+  particleTree->SetBranchAddress("pz",&pz);
+  
+  if(eventID<maxphspPart){
+    particleTree->GetEntry(eventID);
+    pos = G4ThreeVector(x,y,z);
+    p = sqrt(px*px + py*py + pz*pz);
+    momDir = G4ThreeVector(px/p,py/p,pz/p);
+
+    fParticleGun->SetParticleMomentumDirection(momDir);
+    fParticleGun->SetParticlePosition(pos);
+    fParticleGun->SetParticleEnergy(e);   
+    fParticleGun->GeneratePrimaryVertex(anEvent);   
+  }
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
